@@ -1,0 +1,20 @@
+# Source files
+src/
+__tests__/
+
+# Config files
+tsconfig.json
+jest.config.js
+build.js
+eslint.config.mjs
+
+# Development
+node_modules/
+coverage/
+.vscode/
+.git/
+.gitignore
+
+# Misc
+*.log
+.DS_Store
