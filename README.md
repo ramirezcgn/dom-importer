@@ -429,4 +429,4 @@ Parses all `data-*` attributes of an element into a `Props` object (`Record<stri
 
 ## License
 
-ISC
+MIT
