@@ -31,7 +31,7 @@
   "scripts": {
     "build": "tsc --emitDeclarationOnly && node build.js",
     "test": "jest",
-    "prepublishOnly": "npm run build && npm test"
+    "publish": "npm run build && npm test && npm publish"
   },
   "keywords": [
     "dom",

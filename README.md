@@ -10,7 +10,8 @@ npm install dom-importer
 
 ## Quick start — functional API
 
-For one-shot page loads the `scan` helper is the simplest entry point:
+For one-shot page loads the `scan` helper is the simplest entry point.
+It accepts the same `LoaderOptions` as `new DomImporter(options)`, so `transformers`, `mount`, `init`, `onError`, and `rootNode` are supported:
 
 ```ts
 import { scan } from 'dom-importer';
@@ -376,7 +377,7 @@ The primary API. Holds shared state: import cache and active observer instances.
 
 ### `scan(definitions, options?)` — functional helper
 
-Creates a `DomImporter`, runs `scan`, and discards it. Suitable for simple one-shot page loads. Returns `Promise<void>`.
+Creates a `DomImporter(options)`, runs `scan`, and discards it. Suitable for simple one-shot page loads. `options` is `LoaderOptions<T>`, so all loader options are supported. Returns `Promise<void>`.
 
 ### `prefetch(definitions, options?)` — functional helper
 
