@@ -1,6 +1,16 @@
 # dom-importer
 
+[![npm version](https://img.shields.io/npm/v/dom-importer)](https://www.npmjs.com/package/dom-importer)
+[![npm downloads](https://img.shields.io/npm/dm/dom-importer)](https://www.npmjs.com/package/dom-importer)
+[![license](https://img.shields.io/npm/l/dom-importer)](./LICENSE)
+[![bundle size](https://img.shields.io/bundlephobia/minzip/dom-importer)](https://bundlephobia.com/package/dom-importer)
+
 Scans a DOM tree and dynamically imports JavaScript modules when matching elements are found. Supports plain functions, lifecycle classes (`mount` / `unmount`), lazy loading via `IntersectionObserver`, import-cache deduplication, and SPA-friendly `watch` — all without depending on any framework.
+
+- **Zero dependencies** — no runtime deps, framework-agnostic
+- **Dual ESM + CJS** — works with Vite, webpack, esbuild, and `require()`
+- **TypeScript** — full types included, generic definitions for custom attributes
+- **Tree-shakeable** — import only what you use
 
 ## Install
 
@@ -128,6 +138,62 @@ await loader.scan([
 ]);
 ```
 
+#### Adding a class or attribute after load
+
+The `mount` callback already receives the element and the full definition, so marking loaded elements is straightforward:
+
+```ts
+// Add a class to every loaded element across all definitions
+const loader = new DomImporter({
+  mount(mod, element) {
+    element.classList.add('is-loaded');
+  },
+});
+```
+
+To be more selective — for example only marking certain definitions — use a custom attribute on the definition:
+
+```ts
+import type { ModuleDefinition } from 'dom-importer';
+
+type MyDef = ModuleDefinition<{ loadedClass?: string }>;
+
+const loader = new DomImporter<MyDef>({
+  mount(mod, element, props, def) {
+    if (def.loadedClass) {
+      element.classList.add(def.loadedClass);
+    }
+  },
+});
+
+loader.scan([
+  { selector: '.carousel', load: () => import('./carousel.js'), loadedClass: 'carousel--ready' },
+  { selector: '.tooltip',  load: () => import('./tooltip.js') },   // no class added
+]);
+```
+
+Same idea for attributes:
+
+```ts
+import type { ModuleDefinition } from 'dom-importer';
+
+type MyDef = ModuleDefinition<{ loadedAttr?: string }>;
+
+const loader = new DomImporter<MyDef>({
+  mount(mod, element, props, def) {
+    if (def.loadedAttr) {
+      element.setAttribute(def.loadedAttr, '');
+    }
+  },
+});
+
+loader.scan([
+  { selector: '.carousel', load: () => import('./carousel.js'), loadedAttr: 'data-loaded' },
+]);
+```
+
+> The same `mount` callback also handles cleanup when used with `watch`: return a function and it will be called when the element leaves the DOM.
+
 ### 2. Global `init` callback (`options.init`) — batch-level control
 
 Executes once per definition with all matched elements. Use this for cross-cutting initialization logic. If it returns `true`, the regular mount flow is skipped for that definition.
@@ -216,6 +282,49 @@ export default function (element: Element, props: Props) {
 ```
 
 > When `once: true`, the function is called once for **all** matched elements as `fn(elements)` — no props argument in that case.
+
+---
+
+## CSS / SCSS imports
+
+CSS and SCSS files are supported, just pass a dynamic import of the stylesheet and the library will import it for its side effect. Since a stylesheet has no callable `default` export, the initialization step is simply skipped.
+
+```ts
+import { scan } from 'dom-importer';
+
+scan([
+  // JS component — normal dispatch
+  { selector: '[data-component="carousel"]', load: () => import('./carousel.js') },
+
+  // CSS — imported for its side effect, no init call
+  { selector: '[data-component="carousel"]', load: () => import('./carousel.css') },
+]);
+```
+
+This also composes naturally with transformers:
+
+```ts
+import type { ModuleDefinition } from 'dom-importer';
+
+type MyDef = ModuleDefinition<{ withStyles?: boolean }>;
+
+const loader = new DomImporter<MyDef>({
+  transformers: {
+    selector: (name) => `[data-component="${name}"]`,
+    load: (name, def) =>
+      def.withStyles
+        ? () => import(`./styles/${name}.css`)
+        : () => import(`./components/${name}.js`),
+  },
+});
+
+loader.scan([
+  { selector: 'carousel', load: 'carousel' },
+  { selector: 'carousel', load: 'carousel', withStyles: true },
+]);
+```
+
+> Bundlers (Vite, webpack, esbuild) apply the stylesheet as a side effect of the import, the same as a top-level `import './carousel.css'`.
 
 ---
 
@@ -393,7 +502,7 @@ Creates a `DomImporter` and runs `prefetch`. Returns `Promise<void>`.
 | `load`     | `string \| () => Promise<any>`                    | –       | Module path/URL or short name resolved by `transformers.load`. Prefer a function for bundler support.|
 | `once`     | `boolean`                                         | `false` | Load and call the module only once even if multiple elements match.                                  |
 | `lazy`     | `boolean`                                         | `false` | Defer loading until the element enters the viewport (`IntersectionObserver`).                        |
-| `...T`     | any                                               | –       | Any extra fields — forwarded to transformer functions as the second argument.                        |
+| `...T`     | any                                               | –       | Any extra fields — forwarded to transformer functions and callbacks as the last argument.            |
 
 ### `LoaderOptions<T>`
 
