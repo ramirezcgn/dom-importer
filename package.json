@@ -1,6 +1,6 @@
 {
   "name": "dom-importer",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Scans the DOM and dynamically imports JavaScript modules when matching elements are found. Supports lazy loading, lifecycle hooks, and SPA-friendly DOM watching.",
   "license": "MIT",
   "author": "ramirezcgn",

@@ -168,7 +168,7 @@ export class DomImporter<T extends Record<string, unknown> = Record<string, unkn
     const importFn: LoadFn =
       typeof resolvedLoad === 'function'
         ? resolvedLoad
-        : () => import(/* @vite-ignore */ resolvedLoad);
+        : () => import(/* @vite-ignore */ /* webpackIgnore: true */ resolvedLoad);
 
     return { resolvedSelector, importFn, once, lazy };
   }
